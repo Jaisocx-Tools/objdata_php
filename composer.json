@@ -12,5 +12,7 @@
             "name": "Elias Jaisocx developer"
         }
     ],
-    "require": {}
+    "require": {
+        "php": ">=8.2"
+    }
 }
