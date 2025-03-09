@@ -1,7 +1,7 @@
 {
     "name": "jaisocx/objdata",
+    "version": "2.1.2-dev",
     "minimum-stability": "dev",
-    "version": "2.1.2",
     "readme": "./README.md",
     "description": "ObjData format for objects and arrays in old good style of packets with fixed lengths and offsets fields.",
     "type": "library",
