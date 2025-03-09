@@ -1,0 +1,16 @@
+{
+    "name": "jaisocx/objdata",
+    "description": "ObjData format for objects and arrays in old good style of packets with fixed lengths and offsets fields.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Jaisocx\\ObjData\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Elias Jaisocx developer"
+        }
+    ],
+    "require": {}
+}
