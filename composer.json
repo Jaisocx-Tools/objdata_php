@@ -1,7 +1,16 @@
 {
     "name": "jaisocx/objdata",
+    "minimum-stability": "dev",
+    "version": "2.1.2",
+    "readme": "./README.md",
     "description": "ObjData format for objects and arrays in old good style of packets with fixed lengths and offsets fields.",
     "type": "library",
+    "keywords": [
+        "json",
+        "parser",
+        "serializer",
+        "objdata"
+    ],
     "autoload": {
         "psr-4": {
             "Jaisocx\\ObjData\\": "src/"
