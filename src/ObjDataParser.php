@@ -2,6 +2,7 @@
 
 namespace Jaisocx\ObjData;
 
+use Jaisocx\ObjData\ObjData;
 use Jaisocx\ObjData\ObjDataPackage;
 use Jaisocx\ObjData\Constants\ObjDataConstantsFieldPointers;
 use Jaisocx\ObjData\Constants\ObjDataConstantsDataTypes;
@@ -11,27 +12,43 @@ class ObjDataParser {
 
     public static function parse($objDataByteBuf) {
         $dataHelper = ObjDataParser::parsePropHeaders($objDataByteBuf, 0);
-        return ObjDataParser::parseProperty($objDataByteBuf, 0, $dataHelper, null);
+        return ObjDataParser::parseProperty($objDataByteBuf, 0, $dataHelper);
     }
 
-    public static function parseProperty($objDataByteBuf, $offset, $dataHelper, $parentObject) {
+    public static function parseProperty(
+        $objDataByteBuf, 
+        $offset, 
+        $dataHelper
+    ) {
         $retValue = null;
 
         if ($dataHelper->datatype === ObjDataConstantsDataTypes::ARRAY ||
             $dataHelper->datatype === ObjDataConstantsDataTypes::OBJECT) {
 
-            if ($dataHelper->datatype === ObjDataConstantsDataTypes::ARRAY) {
-                $retValue = [];
-            } else {
-                $retValue = [];
-            }
+            $retValue = [];
 
             $arrayItemsAmount = $dataHelper->propsAmount;
             $arrayItemOffset = $offset + $dataHelper->propertyValueStart;
 
             for ($loopCounter = 0; $loopCounter < $arrayItemsAmount; $loopCounter++) {
+
                 $arrayItemDataHelper = ObjDataParser::parsePropHeaders($objDataByteBuf, $arrayItemOffset);
-                ObjDataParser::parseProperty($objDataByteBuf, $arrayItemOffset, $arrayItemDataHelper, $retValue);
+
+                $key = ObjDataParser::getPropName( 
+                    $arrayItemDataHelper, 
+                    $objDataByteBuf, 
+                    $arrayItemOffset,
+                    $dataHelper->datatype 
+                );
+
+                $subProp = ObjDataParser::parseProperty(
+                    $objDataByteBuf, 
+                    $arrayItemOffset, 
+                    $arrayItemDataHelper
+                );
+
+                $retValue[$key] = $subProp;
+
                 $arrayItemOffset += $arrayItemDataHelper->lengthAll;
             }
 
@@ -47,35 +64,40 @@ class ObjDataParser {
                 $objDataByteBuf,
                 $offset + $dataHelper->propertyValueStart,
                 $dataHelper->propertyValueLength,
-                "utf8"
+                ObjData::CHARSET
             );
 
         } else {
             $retValue = "Hu hu";
         }
 
-        if ($parentObject !== null) {
-            $propName = null;
-            if (is_array($parentObject)) {
-                $propName = ObjDataPackage::parseByteBufToNumber(
-                    $objDataByteBuf,
-                    $offset + $dataHelper->propertyNameStart,
-                    $dataHelper->propertyNameLength
-                );
+        return $retValue;
+    }
 
-            } else {
-                $propName = ObjDataPackage::parseByteBufToText(
-                    $objDataByteBuf,
-                    $offset + $dataHelper->propertyNameStart,
-                    $dataHelper->propertyNameLength,
-                    "utf8"
-                );
-            }
+    public static function getPropName (
+        ObjDataHelpingProps $dataHelper,
+        array $objDataByteBuf,
+        int $offset,
+        int $datatypeHolder
+    ): string|int {
+        $key = null;
+        if ( $datatypeHolder === ObjDataConstantsDataTypes::ARRAY ) {
+            $key = ObjDataPackage::parseByteBufToNumber(
+                $objDataByteBuf,
+                $offset + $dataHelper->propertyNameStart,
+                $dataHelper->propertyNameLength
+            );
 
-            $parentObject[$propName] = $retValue;
+        } else if ( $datatypeHolder === ObjDataConstantsDataTypes::OBJECT ) {
+            $key = ObjDataPackage::parseByteBufToText(
+                $objDataByteBuf,
+                $offset + $dataHelper->propertyNameStart,
+                $dataHelper->propertyNameLength,
+                ObjData::CHARSET
+            );
         }
 
-        return $retValue;
+        return $key;
     }
 
     public static function parsePropHeaders($byteBuf, $offset) {
@@ -124,22 +146,5 @@ class ObjDataParser {
         $dataHelper->propertyValueLength = $dataHelper->lengthAll - $dataHelper->propertyValueStart;
 
         return $dataHelper;
-    }
-
-    // Fetch method to get and parse data from the server with flexible headers and method options
-    public static function fetchData($url, $method = "GET", $headers = []) {
-        // Fetch request with flexible headers and method
-        $response = file_get_contents($url); // Use file_get_contents() or cURL in PHP for HTTP requests
-
-        // Check for successful response
-        if ($response === false) {
-            throw new \Exception("HTTP error!");
-        }
-
-        // Get response as binary data (string in PHP)
-        $uint8Array = unpack("C*", $response); // Unpack into an array of unsigned integers (byte data)
-
-        // Deserialize the data
-        return $uint8Array;
     }
 }

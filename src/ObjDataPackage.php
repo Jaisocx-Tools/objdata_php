@@ -2,6 +2,9 @@
 
 namespace Jaisocx\ObjData;
 
+use Jaisocx\ObjData\ObjData;
+
+
 class ObjDataPackage {
 
     // Concatenate byte arrays (Uint8Array) into a single array (string)
@@ -10,29 +13,36 @@ class ObjDataPackage {
     }
 
     // Parse byte buffer to number (similar to parsing to a 4-byte integer in JS)
-    public static function parseByteBufToNumber($byteBuf, $offset, $len) {
+    public static function parseByteBufToNumber($byteBuf, $offset, $len): int {
         $result = 0;
-        for ($loopCounter = 0; $loopCounter < $len; $loopCounter++) {
+        $end = $len + 1;
+        for ($loopCounter = 1; $loopCounter < $end; $loopCounter++) {
             $byteBufOffset = $offset + $loopCounter;
             $num = $byteBuf[$byteBufOffset];
-            $shiftBytesNumber = ($len - 1 - $loopCounter);
+            $shiftBytesNumber = ($end - 1 - $loopCounter);
             $shiftBitsNumber = ($shiftBytesNumber << 3 ); // power 3 is multiple by 8. 8 bits in a byte.
-            $byteBuf[$byteBufOffset] = (($num >> $shiftBitsNumber) & 0xFF);
-            $byteValueOfAChar = ord($num);
-            $result |= ( $byteValueOfAChar << $shiftBitsNumber );
+            // $byteBuf[$byteBufOffset] = (($num >> $shiftBitsNumber) & 0xFF);
+            // $byteValueOfAChar = ord($num);
+            $result |= ( $num << $shiftBitsNumber );
         }
         return $result;
     }
 
     // Parse byte buffer to text (similar to decoding text from a buffer in JS)
     public static function parseByteBufToText($byteBuf, $offset, $len, $charsetName) {
-        $text = substr($byteBuf, $offset, $len);
-        return mb_convert_encoding($text, 'UTF-8', $charsetName);
+        $arr = array_slice( $byteBuf, $offset, $len );
+        $chars = array_map( function($c){ return chr( $c ); }, $arr );
+        $text = join("", $chars);
+        if ( $charsetName === ObjData::CHARSET ) {
+            return $text;
+        }
+
+        return mb_convert_encoding($text, ObjData::CHARSET, $charsetName);
     }
 
     // Serialize text to byte buffer (similar to using TextEncoder in JS)
     public static function serializeTextToByteBuf($text) {
-        return mb_convert_encoding($text, 'UTF-8');
+        return mb_convert_encoding($text, ObjData::CHARSET);
     }
 
     // Serialize number to byte buffer (like JS's byte array handling)
